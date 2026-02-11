@@ -1,2 +1,2 @@
 # pmqutil
-Linux Posix message queue utility
+Linux POSIX message queue utility
