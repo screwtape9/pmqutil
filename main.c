@@ -7,7 +7,7 @@
 
 extern const char *__progname;
 static const char *yellow = "\033[0;33m";
-static const char *white  = "\033[0;37m";
+static const char *none   = "\033[0;00m";
 static const char *cyan   = "\033[0;36m";
 
 static void usage()
@@ -69,15 +69,19 @@ void disp_q_attr(const char *qname)
   int n = 0;
   mqd_t mqd = -1;
   struct mq_attr attr = { 0, 0, 0, 0 };
+  char txt[512] = { '\0' };
 
   mqd = mq_open(qname, O_RDONLY, S_IRWXU, NULL);
   if (-1 == mqd) {
     if (ENOENT == errno)
-      printf("%s%s%s does not exist.\n", yellow, qname, white);
+      printf("%s%s%s does not exist.\n", yellow, qname, none);
     else if (EINVAL == errno)
-      printf("Invalid name format. Did you mean %s/%s%s ?.\n", yellow, qname, white);
-    else
-      perror("Error opening queue");
+      printf("Invalid name format. Did you mean %s/%s%s ?.\n", yellow, qname, none);
+    else {
+      snprintf(txt, sizeof(txt), "Error opening %s%s%s", yellow, qname, none);
+      txt[sizeof(txt) - 1] = '\0';
+      perror(txt);
+    }
     return;
   }
   n = mq_getattr(mqd, &attr);
@@ -89,11 +93,11 @@ void disp_q_attr(const char *qname)
            "  max num msgs: %s% 4ld%s\n"
            "  max msg size:%s% 4ld%s\n"   /* why one less space here !?!? */
            "  curr msgs:    %s% 4ld%s\n",
-           yellow,  qname,            white,
-           cyan,    attr.mq_flags,    white,
-           cyan,    attr.mq_maxmsg,   white,
-           cyan,    attr.mq_msgsize,  white,
-           cyan,    attr.mq_curmsgs,  white);
+           yellow,  qname,            none,
+           cyan,    attr.mq_flags,    none,
+           cyan,    attr.mq_maxmsg,   none,
+           cyan,    attr.mq_msgsize,  none,
+           cyan,    attr.mq_curmsgs,  none);
   mq_close(mqd);
   mqd = -1;
 }
@@ -136,15 +140,21 @@ void disp_all_q_attr()
 
 void rem_q(const char *qname)
 {
-  int n = mq_unlink(qname);
+  int n = 0;
+  char txt[512] = { '\0' };
+
+  n = mq_unlink(qname);
   if (-1 == n) {
     if (ENOENT == errno)
-      printf("%s%s%s does not exist.\n", yellow, qname, white);
-    else
-      perror("Error unlinking queue");
+      printf("%s%s%s does not exist.\n", yellow, qname, none);
+    else {
+      snprintf(txt, sizeof(txt), "Error unlinking %s%s%s", yellow, qname, none);
+      txt[sizeof(txt) - 1] = '\0';
+      perror(txt);
+    }
   }
   else
-    printf("Removed %s.\n", qname);
+    printf("Removed %s%s%s.\n", yellow, qname, none);
 }
 
 void rem_all_q()
